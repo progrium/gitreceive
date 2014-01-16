@@ -29,7 +29,7 @@ EOF
     echo "Created receiver script in $GITHOME for user '$GITUSER'."
     ;;
 
-  upload-key) # sudo gitreceive upload-key <username>
+  upload-key) # sudo gitreceive upload-key <userid>
     KEY=$(cat)
     FINGERPRINT=$(ssh-keygen -lf /dev/stdin <<< $(echo $KEY) | awk '{print $2}')
     AUTHORIZED_KEYS=$GITHOME/.ssh/authorized_keys
@@ -37,6 +37,12 @@ EOF
     KEY_PREFIX="command=\"$SELF run $2 $FINGERPRINT\",no-agent-forwarding,no-pty,no-user-rc,no-X11-forwarding,no-port-forwarding"
     echo "$KEY_PREFIX $KEY" >> $AUTHORIZED_KEYS
     echo $FINGERPRINT
+    ;;
+
+  remove-key) # sudo gitreceive remove-key <userid>
+    USERID=$2
+    AUTHORIZED_KEYS=$GITHOME/.ssh/authorized_keys
+    sed -i "/ $USERID /d" $AUTHORIZED_KEYS
     ;;
 
 # Internal commands
