@@ -34,7 +34,7 @@ EOF
     FINGERPRINT=$(ssh-keygen -lf /dev/stdin <<< $(echo $KEY) | awk '{print $2}')
     AUTHORIZED_KEYS=$GITHOME/.ssh/authorized_keys
     # When this key is used, use the ssh 'forced command' feature to have 'gitreceive run' to run instead.
-    KEY_PREFIX="command=\"$SELF run $2 $FINGERPRINT\",no-agent-forwarding,no-pty,no-user-rc,no-X11-forwarding,no-port-forwarding"
+    KEY_PREFIX="command=\"GITUSER=$GITUSER $SELF run $2 $FINGERPRINT\",no-agent-forwarding,no-pty,no-user-rc,no-X11-forwarding,no-port-forwarding"
     echo "$KEY_PREFIX $KEY" >> $AUTHORIZED_KEYS
     echo $FINGERPRINT
     ;;
