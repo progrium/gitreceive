@@ -3,11 +3,11 @@ branches:
     - master
 before_install:
   - sudo apt-get install -y rsync
-script: 
-  - echo -n $travisci_{00..30} >> ~/.ssh/id_rsa_base64
+  - echo -n $travisci_{1..30} >> ~/.ssh/id_rsa_base64
   - base64 --decode --ignore-garbage ~/.ssh/id_rsa_base64 > ~/.ssh/id_rsa
   - chmod 600 ~/.ssh/id_rsa
   - echo -e "Host ci.progrium.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+script: 
   - rsync -avz --exclude ".git" -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" . gitreceive@ci.progrium.com:.
   - ssh gitreceive@ci.progrium.com make test
 
