@@ -1,15 +1,31 @@
----
 branches:
   only:
     - master
-script: make -e remote TARGET=test
 before_install:
-  - "sudo apt-get install -y s3cmd"
-  - "tests/setup_travis"
+  - sudo apt-get install -y rsync
+  - echo -n $id_rsa_{00..30} >> ~/.ssh/id_rsa_base64
+  - base64 --decode --ignore-garbage ~/.ssh/id_rsa_base64 > ~/.ssh/id_rsa
+  - chmod 600 ~/.ssh/id_rsa
+  - echo -e "Host ci.progrium.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+script: 
+  - rsync -avz --exclude ".git" -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" . gitreceive@ci.progrium.com:.
+  - ssh gitreceive@ci.progrium.com make test
+
 #notifications:
 #  irc: "chat.freenode.net#dokku"
 env:
   global:
-    - REMOTE=test@test.progrium.com
-    - secure: "Q+lKt2CG7/1nur1TkuXyd2LiNjctaCoMdyFnkrq4H3PnJROWL20Vc9qBbtVr\n5yM+kiXmRBaCbhqjNe3T7WdRReLihR1fNC5DFI8Upt3jE4+C4/IYc7lPQBcn\ntvFAklBnDFiE6LparlhNdJaEJfdocP8c1kILTwRIZjof0ozYYU0="
-    - secure: "XdtWn4kmlvOBWlkCAifuR8MIYK1i3GQhzba28lFIIdTPrcpeiD6G33h2bljI\nTP9p2h5Hcz/wN7Nf4vcr8gZ0ponTMjpp6bzCcNkPuhjAmjVP0BuwQdhNPoJI\ntvhVKG356wBYp6LvqDFwRm7vK1dDwz+c4n5+wPBP5L7FkI5ZK7E="
+    - secure: "TQJOJIg1zMcrOqyl2UD0NG4HALhs27bXAVwte33Uyapao7Ayi2naGAcsLRIW\n2E5BK9ILvcH0MR4/jBTzuFkkMNCckluhQX6yi66/Ju/OHbFIXRSfbV9f7e14\njw3xLYNCRXR5tYnDTPR/nsfly9eWITmixl7qzuRkeU5eWJzm/D0="
+    - secure: "EDktPY4hwYAPo5gFmZps7sCB64rc6dwHbuNBLMDayYuHDFiSk9ZJfyF4R0fC\ndkVeR/d6IKeB+23mfhKlribGXJJ8eIjxbTsxZJi0KvhmXo/8uBJNHjvvwm8d\ncXSX1+a+vc6jtgoXxcghV1kKGJVHFwNuvA7kcFdMdiW8uTuga4c="
+    - secure: "BCpcznLXeI7+rNxmDw4oHI/+xhgi/7PxB4IMLPa74+4LQMRf8VlRugQT7n/z\nNoz2+bIswOACzdnJRxJfuVdw7EpRYuh3s0fxYWesVOo2E8Ixz+1ssJLGdmB7\n6AGQRl5GiByUqTGN5SrEmRbBm8JwOZO/vW3dt1uXLMRZGRXg2CQ="
+    - secure: "SzieTW8P9lvaPyTExc0fyTj0QgwRPQUGWPJ14bN2+SVu1gIV5CpHGFq6gH66\nOpMfxvDzh4fTkZZXowa4sQKlcSQ9r5ReyWWFh+5n08+H09nUrjccUYiFWWQ5\nIPexIvfSm0pvLXkJu/zf/TWl8K3p0+6KuE1JPke2GSaVKY1Rlzg="
+    - secure: "FlEWim548ISDVQY4nysBHrb9VFA/uxfOa+aEVzTTBPkEybI6973wyUbmR2R1\nPODP/OJR8xDgZzUFZ7aYPrWiSlT+Tl6nsvxJUhVQh2ISpIVDw0kFmOdbbLFx\nZXP9aYwrKop19iqmEYxYO8Or9cmjJONQE4nSNa0P86H1KzrqoI4="
+    - secure: "eu1pAE37JP1UBUoQ3P0OIZKBIvTbekcd3VMWjCZ/Ozs+JrgE9aDeuCTHiJOr\n7n7MrKIpoR90+3qnlPszfnzv9Y+t11TT2/61RT5H0XaUfW4wIk5R9z82qPEg\nKCAqj2bWipmE/8tZ8VUDXfxTa2c0IaepUDY51m9pl4NeXeeW1fQ="
+    - secure: "eyF4THM+NC71VXG7iWwzp1LvDLRz7Fv2LTGVF/MSWd7DTdzOPA7Jwev6Z5XA\nq592og7ivhz0k+pbcbXx1o8c+tRJfLZ/KLDlKWK0jDOgpGFkMMJf2sXsERXW\nem0exnGnAmEchBmEko15Voa93VKdbVqycukyEvI3I8OpUYLEh+k="
+    - secure: "eqfIiywFG/3ccXtKOSV0s9gyz/0wwAbQyhehhhrUF/MMTj9Dhe9IZMdQdrj9\nPP50Y9BvsW7CogPJ4HpffOOttwcX91aQwfAQRDmRddLTWAyb9tOa7lQx57oD\nLGFD3gdd3dBCWEdjf+bXt6Lp1A7zzqeEVKyrHLHfVubsb7OfJqc="
+    - secure: "Bc8eukp8K5wnYFMqBClAem8G9K2MSDL6jTx4+L+3Bkpa3i0u53J1WwuoTQfg\njFoajIMYDu3YVnVQ+1Rl67OwcGsCbKGIO9JRIcgZqhehsfc7W82LGejpCkYo\ncAtJELc3ONEjDCUQXsvDHUFa0J/teOmTUO+T0qmz1p09v51jzyo="
+    - secure: "FoWY0mozoh6lJzEc3e5bAv5Fl7Z1ixowci9dTrVTo5Irh9znz84EevocNNpp\n2aopxtjKwBnJMTiaJa1zA8/FEnTDaSJJT0FffurR3P84nV68VSDyx3tIx1Tz\nPqMybN6JpISuRhtfPgZwpH0N3JjLRmoaX4U6UyXOZyJG758xxic="
+    - secure: "JNjOcyDb+AuGZDuc4epDDD08v1eQFngl1JZcZVZ2QY+WAtAUrmy2J+kVv79A\nEpS2oL8NjCX5Cnn0kR7T9+RW8kcLT5wJrGGdr7N/x9zPJ2Djbqs8mfEXhm0v\njjR84hps60RrFY5D+suIg5aug6IBWcHMoScPrc/dEr1UGw/opPI="
+    - secure: "A3kdmk9N0nzN54okFPhe7Z7bf6xQ7pxBP658ED/stnPFEU07PrL2lDsBe4VL\nDbT940utiw0mda6DysMQuUL8vS7dd2m3HUIT+p6xrpSMTOQGnt4xy19r465N\nJsBdyBN3LGXJF8CodiI6sS24jt+P2fsHIyWyVotHLm8F9HbRztQ="
+    - secure: "WXLMXpxGwhegZWJGZfSTt0dIyRBh/Epp8o3pURNWMK5vayCoK3tBLbLI8xrD\n49GhtU2MeakDfXDeXOyqYZytvlFHIQWZH39aPg9sUs0sbwRbiwprfI67ypS8\ns+7B3iF1cvq01brJ5OogAGlSGMNSoqLGjmsC0f7efKw/88dUOJQ="
+    - secure: "OPzfmpw3FLGJVdJro83yx/GKR/5wAR4cE9fJ0ekmbe3oMAKW27RdOOrPG3mW\nzUWMdTwr3QamYVvT8fa2px78EyKTya4+o74uCVD8NKSOkiKJ8QlHrvPUsbeg\nyewZvaTmRaBpa1iVKsFiKsdUSJ+4O9fPa7E2RB0SqcshWFST3zU="

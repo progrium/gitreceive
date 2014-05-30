@@ -22,7 +22,7 @@ On your server, download https://raw.github.com/progrium/gitreceive/master/gitre
 
 This automatically makes a user and home directory if it doesn't exist. 
 
-    $ sudo gitreceive init
+    $ sudo gitreceive sshd:init
     Created receiver script in /home/git for user 'git'.
 
 You use a different user by setting `GITUSER=somethingelse` in the
@@ -58,14 +58,14 @@ The repo contents are streamed into `STDIN` as an uncompressed archive (tar file
 
 #### Create a user by uploading a public key from your laptop
 
-We just pipe our local SSH key into the `gitreceive upload-key` command via SSH:
+We just pipe our local SSH key into the `gitreceive sshd:upload-key` command via SSH:
 
-    $ cat ~/.ssh/id_rsa.pub | ssh you@yourserver.com "sudo gitreceive upload-key <username>"
+    $ cat ~/.ssh/id_rsa.pub | ssh you@yourserver.com "sudo gitreceive sshd:upload-key <username>"
 
 The `username` argument is just an arbitrary name associated with the key, mostly
 for use in your system for auth, etc.
 
-`gitreceive upload-key` will authorize this key for use on the `$GITUSER`
+`gitreceive sshd:upload-key` will authorize this key for use on the `$GITUSER`
 account on the server, and use the SSH "forced commands" syntax in the remote
 `.ssh/authorized_keys` file,  causing the internal `gitreceive run` command to
 be called when this key is used with the remote git account. This allows us to
@@ -74,9 +74,9 @@ repo, which triggers the custom receiver script.
 
 #### Add a remote to a local repository
 
-    $ git remote add demo git@yourserver.com:example.git
+    $ git remote add demo git@yourserver.com:example
 
-The repository `example.git` will be created on the fly when you push.
+The repository `example` will be created on the fly when you push.
 
 #### Push!!
 
@@ -86,9 +86,9 @@ The repository `example.git` will be created on the fly when you push.
     Compressing objects: 100% (3/3), done.
     Writing objects: 100% (3/3), 332 bytes, done.
     Total 3 (delta 1), reused 0 (delta 0)
-    remote: ----> Receiving progrium/gitreceive.git ... 
-    remote: ----> Posting to http://requestb.in/rlh4znrl ...
-    remote: ok
+    ----> Receiving progrium/gitreceive.git ... 
+    ----> Posting to http://requestb.in/rlh4znrl ...
+    ok
     To git@gittest:progrium/gitreceive.git
        59aa541..6eafb55  master -> master
 
@@ -116,18 +116,10 @@ I used to work at Twilio. Imagine pushing a repo with a TwiML file to a
 gitreceive repo with a phone number for a name. And then it runs that
 TwiML on Twilio and shows you the result, all from the `git push`. 
 
-Another idea: When it's so easy to handle pushed code, how about
-creating a screen in the office that will display whatever code is
-pushed to it.
-
-## Contribute
-
-This whole system is contained in a single bash script less than 100
-lines long. Let's keep it simple, but I'm definitely open to contribution!
 
 ## Big Thanks
 
-DotCloud
+DotCloud, DigitalOcean
 
 ## License
 

@@ -1,6 +1,4 @@
-VERSION = 0.1.0
-
-REMOTE_DIR ?= /tmp/gitreceive
+VERSION = 0.2.0
 
 install:
 	cp gitreceive /usr/local/bin/gitreceive
@@ -11,9 +9,9 @@ check-docker:
 
 test: check-docker
 	cp gitreceive tests
-	docker build -t progrium/gitreceive-tests tests
+	docker build -t gitreceive-test tests
 	rm tests/gitreceive
-	docker run progrium/gitreceive-tests
+	docker run --rm gitreceive-test
 
-remote:
-	tar -c . | ssh -o "StrictHostKeyChecking=no" ${REMOTE} "rm -rf ${REMOTE_DIR} && mkdir -p ${REMOTE_DIR} && cd ${REMOTE_DIR} && tar -xf - && make ${TARGET}"
+clean:
+	docker rmi gitreceive-test

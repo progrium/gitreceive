@@ -5,7 +5,7 @@ teardown() {
 }
 
 @test "gitreceive init creates git user ready for pushes" {
-  gitreceive init
+  gitreceive sshd:init
   [[ -d /home/git ]]
   [[ -f /home/git/.ssh/authorized_keys ]]
   [[ -f /home/git/receiver ]]
@@ -13,22 +13,25 @@ teardown() {
 }
 
 @test "gitreceive receiver script gets tar of pushed repo" {
-  gitreceive init
-  cat /root/.ssh/id_rsa.pub | ssh root@localhost "gitreceive upload-key test"
-  mkdir $BATS_TMPDIR/$BATS_TEST_NAME-push
-  chown git $BATS_TMPDIR/$BATS_TEST_NAME-push
+  gitreceive sshd:init
+  cat /root/.ssh/id_rsa.pub | gitreceive sshd:upload-key test
+  local output_dir="$BATS_TMPDIR/$BATS_TEST_NAME-push"
+  mkdir -p "$output_dir"
+  chown git "$output_dir"
   cat <<EOF > /home/git/receiver
 #!/bin/bash
-tar -C $BATS_TMPDIR/$BATS_TEST_NAME-push -xf -
+set -x
+tar -C $output_dir -xvf - 
 EOF
-  mkdir $BATS_TMPDIR/$BATS_TEST_NAME-repo
-  cd $BATS_TMPDIR/$BATS_TEST_NAME-repo
+  local input_repo="$BATS_TMPDIR/$BATS_TEST_NAME-repo"
+  mkdir -p "$input_repo"
+  cd "$input_repo"
   git init
   echo "foobar" > contents
   git add .
   git commit -m 'only commit'
   git remote add test git@localhost:test-$BATS_TEST_NUMBER
   git push test master
-  [[ -f $BATS_TMPDIR/$BATS_TEST_NAME-push/contents ]]
-  [[ "foobar" == $(cat $BATS_TMPDIR/$BATS_TEST_NAME-push/contents) ]]
+  [[ -f "$output_dir/contents" ]]
+  [[ "foobar" == $(cat "$output_dir/contents") ]]
 }
