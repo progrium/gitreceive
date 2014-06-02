@@ -22,7 +22,7 @@ On your server, download https://raw.github.com/progrium/gitreceive/master/gitre
 
 This automatically makes a user and home directory if it doesn't exist. 
 
-    $ sudo gitreceive sshd:init
+    $ sudo gitreceive init
     Created receiver script in /home/git for user 'git'.
 
 You use a different user by setting `GITUSER=somethingelse` in the
@@ -58,14 +58,14 @@ The repo contents are streamed into `STDIN` as an uncompressed archive (tar file
 
 #### Create a user by uploading a public key from your laptop
 
-We just pipe our local SSH key into the `gitreceive sshd:upload-key` command via SSH:
+We just pipe our local SSH key into the `gitreceive upload-key` command via SSH:
 
-    $ cat ~/.ssh/id_rsa.pub | ssh you@yourserver.com "sudo gitreceive sshd:upload-key <username>"
+    $ cat ~/.ssh/id_rsa.pub | ssh you@yourserver.com "sudo gitreceive upload-key <username>"
 
 The `username` argument is just an arbitrary name associated with the key, mostly
 for use in your system for auth, etc.
 
-`gitreceive sshd:upload-key` will authorize this key for use on the `$GITUSER`
+`gitreceive upload-key` will authorize this key for use on the `$GITUSER`
 account on the server, and use the SSH "forced commands" syntax in the remote
 `.ssh/authorized_keys` file,  causing the internal `gitreceive run` command to
 be called when this key is used with the remote git account. This allows us to
