@@ -5,7 +5,7 @@ teardown() {
 }
 
 @test "gitreceive init creates git user ready for pushes" {
-  gitreceive sshd:init
+  gitreceive init
   [[ -d /home/git ]]
   [[ -f /home/git/.ssh/authorized_keys ]]
   [[ -f /home/git/receiver ]]
@@ -13,8 +13,8 @@ teardown() {
 }
 
 @test "gitreceive receiver script gets tar of pushed repo" {
-  gitreceive sshd:init
-  cat /root/.ssh/id_rsa.pub | gitreceive sshd:upload-key test
+  gitreceive init
+  cat /root/.ssh/id_rsa.pub | gitreceive upload-key test
   local output_dir="$BATS_TMPDIR/$BATS_TEST_NAME-push"
   mkdir -p "$output_dir"
   chown git "$output_dir"
