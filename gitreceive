@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 readonly GITUSER="${GITUSER:-git}"
 readonly GITHOME="/home/$GITUSER"
@@ -101,17 +100,20 @@ strip_remote_prefix() {
 }
 
 main() {
+  set -euo pipefail
+
   readonly SELF="$(absolute_path $0)"
+  
   case "$1" in
   # Public commands
   
-    sshd:init) # gitreceive init
+    init) # gitreceive init
       setup_git_user "$GITHOME" "$GITUSER"
       setup_receiver_script "$GITHOME" "$GITUSER"
       echo "Created receiver script in $GITHOME for user '$GITUSER'."
       ;;
   
-    sshd:upload-key) # sudo gitreceive upload-key <username>
+    upload-key) # sudo gitreceive upload-key <username>
       declare name="$2"
       local key="$(cat)"
       install_authorized_key "$key" "$name" "$GITHOME" "$GITUSER" "$SELF"
@@ -141,4 +143,5 @@ main() {
       ;;
   esac
 }
-main $@
+
+[[ "$0" == "$BASH_SOURCE" ]] && main $@
