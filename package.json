@@ -1,0 +1,9 @@
+{
+  "name": "gitreceive",
+  "version": "0.2.0",
+  "description": "Easily accept and handle arbitrary git pushes",
+  "global": "true",
+  "install": "make install",
+  "scripts": [ "gitreceive" ]
+}
+
