@@ -3,6 +3,7 @@
 readonly GITUSER="${GITUSER:-git}"
 readonly GITHOME="/home/$GITUSER"
 
+# Given a relative path, calculate the absolute path
 absolute_path() {
   pushd "$(dirname $1)" > /dev/null
   local abspath="$(pwd -P)"
@@ -10,6 +11,8 @@ absolute_path() {
   echo "$abspath/$(basename $1)"
 }
 
+# Create a Git user on the system, with home directory and an .authorized_keys file that contains the public keys
+# for all users that are allowed to push their repos here. User defaults to $GITUSER, which defaults 'git'.
 setup_git_user() {
   declare home_dir="$1" git_user="$2"
   useradd -d "$home_dir" "$git_user" || true
@@ -18,6 +21,7 @@ setup_git_user() {
   chown -R "$git_user" "$home_dir"
 }
 
+# Creates a sample receiver script. This is the script that is triggered after a successful push
 setup_receiver_script() {
   declare home_dir="$1" git_user="$2"
   local receiver_path="$home_dir/receiver"
@@ -38,10 +42,16 @@ EOF
   chown "$git_user" "$receiver_path"
 }
 
+# Generate a shorter, but still unique, version of the public key associated with the user doing `git push'
 generate_fingerprint() {
   awk '{print $2}' | base64 -d | md5sum | awk '{print $1}' | sed -e 's/../:&/2g'
 }
 
+# Given a public key, add it to the .authorized_keys file with a 'forced command'. The 'forced command' is a syntax
+# specific to SSH's .authorized_keys file that allows you to specify a command that is run as soon as a user logs in.
+# Note that even though `git push' does not explicitly mention SSH, it is nevertheless using the SSH protocol under the
+# hood.
+# See: http://man.finalrewind.org/1/ssh-forcecommand/
 install_authorized_key() {
   declare key="$1" name="$2" home_dir="$3" git_user="$4" self="$5"
   local fingerprint="$(echo "$key" | generate_fingerprint)"
@@ -50,6 +60,7 @@ install_authorized_key() {
   echo "$key_options $key" >> "$home_dir/.ssh/authorized_keys"
 }
 
+# Remove the slash from the beginning of a path. Eg; '/twbs/bootstrap' becomes 'twbs/bootstrap'
 strip_root_slash() {
   local str="$(cat)"
   if [ "${str:0:1}" == "/" ]; then
@@ -59,10 +70,14 @@ strip_root_slash() {
   fi
 }
 
+# Get the repo from the incoming SSH command. This is needed as the original intended response to `git push' is
+# overridden by the use of a 'forced command' (see install_authorized_key()). The forced command needs to know what repo
+# to act on.
 parse_repo_from_ssh_command() {
   awk '{print $2}' | perl -pe 's/(?<!\\)'\''//g' | sed 's/\\'\''/'\''/g' | strip_root_slash
 }
 
+# Create a git-enabled folder ready to receive git activity, like `git push'
 ensure_bare_repo() {
   declare repo_path="$1"
   if [ ! -d "$repo_path" ]; then
@@ -73,6 +88,7 @@ ensure_bare_repo() {
   fi
 }
 
+# Create a Git pre-receive hook in a git repo that runs `gitreceive hook' when the repo receives a new git push
 ensure_prereceive_hook() {
   declare repo_path="$1" home_dir="$2" self="$3"
   local hook_path="$repo_path/hooks/pre-receive"
@@ -85,44 +101,54 @@ EOF
   cd - > /dev/null
 }
 
+# When a repo receives a push, its pre-receive hook is triggered. This in turn executes `gitreceive hook', which is a
+# wrapper around this function. The repo is updated and its working tree tarred so that it can be piped to
+# `$home_dir/receiver'. The receiver script is setup by `setup_receiver_script()'.
 trigger_receiver() {
   declare repo="$1" user="$2" fingerprint="$3" home_dir="$4"
+  # oldrev, newrev, refname are a feature of the way in which Git executes the pre-receive hook.
+  # See https://www.kernel.org/pub/software/scm/git/docs/githooks.html
   while read oldrev newrev refname; do
-    # Only run this script for the master branch. You can remove this 
+    # Only run this script for the master branch. You can remove this
     # if block if you wish to run it for others as well.
     [[ "$refname" == "refs/heads/master" ]] && \
       git archive "$newrev" | "$home_dir/receiver" "$repo" "$newrev" "$user" "$fingerprint"
   done
 }
 
+# Places cursor at start of line, so that subsequent text replaces existing text. For example;
+# "remote: Updated branch 'master' of 'repo'. Deploying to dev." becomes
+# "------> Updated branch 'master' of 'repo'. Deploying to dev."
 strip_remote_prefix() {
   sed -u "s/^/"$'\e[1G'"/"
 }
 
 main() {
+  # Be unforgiving about errors
   set -euo pipefail
 
   readonly SELF="$(absolute_path $0)"
-  
+
   case "$1" in
   # Public commands
-  
+
     init) # gitreceive init
       setup_git_user "$GITHOME" "$GITUSER"
       setup_receiver_script "$GITHOME" "$GITUSER"
       echo "Created receiver script in $GITHOME for user '$GITUSER'."
       ;;
-  
+
     upload-key) # sudo gitreceive upload-key <username>
       declare name="$2"
       local key="$(cat)"
       install_authorized_key "$key" "$name" "$GITHOME" "$GITUSER" "$SELF"
       echo "$key" | generate_fingerprint
       ;;
-  
+
   # Internal commands
-  
-    run) 
+
+    # Called by the 'forced command' when the git user first authenticates against the server
+    run)
       declare user="$2" fingerprint="$3"
       export RECEIVE_USER="$user"
       export RECEIVE_FINGERPRINT="$fingerprint"
@@ -133,11 +159,12 @@ main() {
       cd "$GITHOME"
       git-shell -c "$(echo "$SSH_ORIGINAL_COMMAND" | awk '{print $1}') '$RECEIVE_REPO'"
       ;;
-  
+
+    # Called by the pre-receive hook
     hook)
       trigger_receiver "$RECEIVE_REPO" "$RECEIVE_USER" "$RECEIVE_FINGERPRINT" "$GITHOME" | strip_remote_prefix
       ;;
-  
+
     *)
       echo "Usage: gitreceive <command> [options]"
       ;;
