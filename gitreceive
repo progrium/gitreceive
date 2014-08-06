@@ -11,8 +11,8 @@ absolute_path() {
   echo "$abspath/$(basename $1)"
 }
 
-# Create a Git user on the system, with home directory and an .authorized_keys file that contains the public keys
-# for all users that are allowed to push their repos here. User defaults to $GITUSER, which defaults 'git'.
+# Create a Git user on the system, with home directory and an `.authorized_keys' file that contains the public keys
+# for all users that are allowed to push their repos here. User defaults to $GITUSER, which defaults to 'git'.
 setup_git_user() {
   declare home_dir="$1" git_user="$2"
   useradd -d "$home_dir" "$git_user" || true
@@ -21,7 +21,7 @@ setup_git_user() {
   chown -R "$git_user" "$home_dir"
 }
 
-# Creates a sample receiver script. This is the script that is triggered after a successful push
+# Creates a sample receiver script. This is the script that is triggered after a successful push.
 setup_receiver_script() {
   declare home_dir="$1" git_user="$2"
   local receiver_path="$home_dir/receiver"
@@ -48,7 +48,7 @@ generate_fingerprint() {
 }
 
 # Given a public key, add it to the .authorized_keys file with a 'forced command'. The 'forced command' is a syntax
-# specific to SSH's .authorized_keys file that allows you to specify a command that is run as soon as a user logs in.
+# specific to SSH's `.authorized_keys' file that allows you to specify a command that is run as soon as a user logs in.
 # Note that even though `git push' does not explicitly mention SSH, it is nevertheless using the SSH protocol under the
 # hood.
 # See: http://man.finalrewind.org/1/ssh-forcecommand/
@@ -157,6 +157,9 @@ main() {
       ensure_bare_repo "$repo_path"
       ensure_prereceive_hook "$repo_path" "$GITHOME" "$SELF"
       cd "$GITHOME"
+      # $SSH_ORIGINAL_COMMAND is set by `sshd'. It stores the originally intended command to be run by `git push'. In
+      # our case it is overridden by the 'forced command', so we need to reinstate it now that the 'forced command' has
+      # run.
       git-shell -c "$(echo "$SSH_ORIGINAL_COMMAND" | awk '{print $1}') '$RECEIVE_REPO'"
       ;;
 
