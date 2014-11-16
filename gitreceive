@@ -81,6 +81,10 @@ parse_repo_from_ssh_command() {
 ensure_bare_repo() {
   declare repo_path="$1"
   if [ ! -d "$repo_path" ]; then
+    if [ -e "$repo_path" ]; then
+      echo 'Fatal error: invalid repository name.' > /dev/stderr
+      exit 1
+    fi
     mkdir -p "$repo_path"
     cd "$repo_path"
     git init --bare > /dev/null
