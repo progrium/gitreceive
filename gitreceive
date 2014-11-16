@@ -42,6 +42,26 @@ EOF
   chown "$git_user" "$receiver_path"
 }
 
+# Creates the default newrepo script. This is the script that is triggered when a new repository is to be created.
+setup_newrepo_script() {
+  declare home_dir="$1" git_user="$2"
+  local newrepo_path="$home_dir/newrepo"
+  cat > "$newrepo_path" <<EOF
+#!/bin/bash
+# This script gets called to create a new repository at \$repo_path.
+# Note: /dev/stdout is already redirected to /dev/null.
+declare repo_path="\$1" repo_name="\$2" username="\$3" fingerprint="\$4"
+
+# Here you could do some tests; exit with non-zero if anything is wrong.
+# e.g. has \$username the right to create a repository named \$repo_name?
+
+# The default is to create a bare repository (\$repo_path is absolute)
+git init --bare "\$repo_path" || exit \$?
+EOF
+  chmod +x "$newrepo_path"
+  chown "$git_user" "$newrepo_path"
+}
+
 # Generate a shorter, but still unique, version of the public key associated with the user doing `git push'
 generate_fingerprint() {
   awk '{print $2}' | base64 -d | md5sum | awk '{print $1}' | sed -e 's/../:&/2g'
@@ -78,14 +98,14 @@ parse_repo_from_ssh_command() {
 }
 
 # Create a git-enabled folder ready to receive git activity, like `git push'
-ensure_bare_repo() {
-  declare repo_path="$1"
-  if [ ! -d "$repo_path" ]; then
-    mkdir -p "$repo_path"
-    cd "$repo_path"
-    git init --bare > /dev/null
-    cd - > /dev/null
-  fi
+ensure_repo_exists() {
+  declare repo_path="$1" repo_name="$2" username="$3" fingerprint="$4" home_dir="$5"
+  # Do nothing if the repo already exists
+  [ -d "$repo_path" ] && return
+  # Call the newrepo script; abort if the return code is non-null
+  # stdout to /dev/null to avoid `protocol error: bad line length character`
+  "$home_dir/newrepo" "$repo_path" "$repo_name" "$username" "$fingerprint" > /dev/null|| exit $?
+  [ -d "$repo_path" ] || exit 1  # make sure we created a repo
 }
 
 # Create a Git pre-receive hook in a git repo that runs `gitreceive hook' when the repo receives a new git push
@@ -136,6 +156,8 @@ main() {
       setup_git_user "$GITHOME" "$GITUSER"
       setup_receiver_script "$GITHOME" "$GITUSER"
       echo "Created receiver script in $GITHOME for user '$GITUSER'."
+      setup_newrepo_script "$GITHOME" "$GITUSER"
+      echo "Created newrepo script in $GITHOME for user '$GITUSER'."
       ;;
 
     upload-key) # sudo gitreceive upload-key <username>
@@ -154,7 +176,7 @@ main() {
       export RECEIVE_FINGERPRINT="$fingerprint"
       export RECEIVE_REPO="$(echo "$SSH_ORIGINAL_COMMAND" | parse_repo_from_ssh_command)"
       local repo_path="$GITHOME/$RECEIVE_REPO"
-      ensure_bare_repo "$repo_path"
+      ensure_repo_exists "$repo_path" "$RECEIVE_REPO" "$RECEIVE_USER" "$RECEIVE_FINGERPRINT" "$GITHOME"
       ensure_prereceive_hook "$repo_path" "$GITHOME" "$SELF"
       cd "$GITHOME"
       # $SSH_ORIGINAL_COMMAND is set by `sshd'. It stores the originally intended command to be run by `git push'. In
