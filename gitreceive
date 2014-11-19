@@ -153,6 +153,10 @@ main() {
       export RECEIVE_USER="$user"
       export RECEIVE_FINGERPRINT="$fingerprint"
       export RECEIVE_REPO="$(echo "$SSH_ORIGINAL_COMMAND" | parse_repo_from_ssh_command)"
+      if [ ! $RECEIVE_REPO ]; then
+        echo ERROR: Arbitrary ssh prohibited!
+        exit 1
+      fi
       local repo_path="$GITHOME/$RECEIVE_REPO"
       ensure_bare_repo "$repo_path"
       ensure_prereceive_hook "$repo_path" "$GITHOME" "$SELF"
