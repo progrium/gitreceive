@@ -111,8 +111,7 @@ trigger_receiver() {
   while read oldrev newrev refname; do
     # Only run this script for the master branch. You can remove this
     # if block if you wish to run it for others as well.
-    [[ "$refname" == "refs/heads/master" ]] && \
-      git archive "$newrev" | "$home_dir/receiver" "$repo" "$newrev" "$user" "$fingerprint"
+    git archive "$newrev" | "$home_dir/receiver" "$repo" "$newrev" "$user" "$fingerprint"
   done
 }
 
