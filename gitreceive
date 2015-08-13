@@ -74,7 +74,7 @@ strip_root_slash() {
 # overridden by the use of a 'forced command' (see install_authorized_key()). The forced command needs to know what repo
 # to act on.
 parse_repo_from_ssh_command() {
-  awk '{print $2}' | perl -pe 's/(?<!\\)'\''//g' | sed 's/\\'\''/'\''/g' | strip_root_slash
+  awk '{print $2}' | sed -e "s/'\(.*\)'/\1/" | sed 's/\\'\''/'\''/g' | strip_root_slash
 }
 
 # Create a git-enabled folder ready to receive git activity, like `git push'
