@@ -101,6 +101,11 @@ receiver script run any other script on the server.
 #### Handling submodules
 Submodules are not included when you do a `git push`, if you want them to be part of your workflow, have a look at [Handling Submodules](https://github.com/progrium/gitreceive/wiki/TipsAndTricks#handling-submodules).
 
+#### Handling new repository creation
+
+If you want to perform some tests when a new repository is to be made, or
+do some action afterwards, have a look at [Handling new repository creation](https://github.com/progrium/gitreceive/wiki/TipsAndTricks#handling-new-repository-creation)
+
 ## So what?
 
 You can use `gitreceive` not only to trigger code on `git push`, but to provide
