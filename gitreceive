@@ -27,16 +27,8 @@ setup_receiver_script() {
   local receiver_path="$home_dir/receiver"
   cat > "$receiver_path" <<EOF
 #!/bin/bash
-#URL=http://requestb.in/rlh4znrl
-#echo "----> Posting to \$URL ..."
-#curl \\
-#  -X 'POST' \\
-#  -F "repository=\$1" \\
-#  -F "revision=\$2" \\
-#  -F "username=\$3" \\
-#  -F "fingerprint=\$4" \\
-#  -F contents=@- \\
-#  --silent \$URL
+echo "---> Push received!"
+exit 0
 EOF
   chmod +x "$receiver_path"
   chown "$git_user" "$receiver_path"
