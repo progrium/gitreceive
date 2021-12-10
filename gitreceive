@@ -1,7 +1,12 @@
 #!/bin/bash
 
 readonly GITUSER="${GITUSER:-git}"
-readonly GITHOME="/home/$GITUSER"
+
+if [ -z "$(getent passwd ${GITUSER})" ]; then
+  readonly GITHOME="/home/${GITUSER}"
+else
+  readonly GITHOME="$(getent passwd ${GITUSER} | cut -d: -f6)"
+fi
 
 # Given a relative path, calculate the absolute path
 absolute_path() {
